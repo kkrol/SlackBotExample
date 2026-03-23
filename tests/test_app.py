@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 # Mock slack_bolt app before importing the main app
 with patch.dict(os.environ, {"SLACK_BOT_TOKEN": "test-token"}):
-    from botChatty.app import app
+    from src.botChatty.app import app
 
 
 class TestAppInitialization:
