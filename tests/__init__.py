@@ -1,1 +1,1 @@
-# Copyright 2022, Slack Technologies, LLC. All rights reserved.
+# Copyright 2026, Krzyszrof Król, All rights reserved.
