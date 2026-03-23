@@ -1,1 +1,1 @@
-# Copyright 2026, Krzyszrof Król, All rights reserved.
+"""Test package for botChatty Slack bot."""
