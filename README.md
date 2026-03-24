@@ -1,6 +1,18 @@
-# SlackBotExample
-Slack bot examples
-README.md
+# Slack Bot Chatty 🤖
+
+A Slack bot built with [Slack Bolt](https://github.com/slackapi/bolt-python) for conversational AI.
+
+## ✨ Features
+
+- Real-time message handling
+- Socket mode support
+- Docker/Podman deployment
+- CI/CD integration
+- Comprehensive testing
+
+## 🛠️ Installation
+
+### Using UV (Recommended)
 ```
 
 ```markdown

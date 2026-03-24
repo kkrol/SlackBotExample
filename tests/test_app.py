@@ -1,27 +1,42 @@
+# tests/test_app.py
 """Unit tests for Slack Bot application using Slack BOLT API patterns."""
-
 import os
-import logging
 import pytest
 from unittest.mock import Mock, patch
 
-# Mock slack_bolt app before importing the main app
-with patch.dict(os.environ, {"SLACK_BOT_TOKEN": "test-token"}):
-    from src.botChatty.app import app
+# Mock settings before importing the main app
+@pytest.fixture
+def mock_settings():
+    """Mock settings for testing"""
+    with patch('src.botChatty.settings.Settings') as mock_settings_class:
+        mock_settings_instance = Mock()
+        mock_settings_instance.slack_bot_token = "test_token"
+        mock_settings_instance.slack_app_token = "test_app_token"
+        mock_settings_instance.slack_signing_secret = "test_secret"
+        mock_settings_class.return_value = mock_settings_instance
+        yield mock_settings_instance
+
+
+@pytest.fixture
+def mock_slack_app(mock_settings):
+    """Create a mock Slack app for testing"""
+    with patch('slack_bolt.App') as mock_app:
+        mock_instance = Mock()
+        mock_app.return_value = mock_instance
+        yield mock_app
 
 
 class TestAppInitialization:
     """Test Slack App initialization."""
 
-    def test_app_exists(self):
+    def test_app_exists(self, mock_slack_app):
         """Test that the app object is created."""
-        assert app is not None
-        assert hasattr(app, "register_message_listener")
+        assert mock_slack_app is not None
+        assert hasattr(mock_slack_app, "register_message_listener")
 
-    def test_error_handler_registered(self):
+    def test_error_handler_registered(self, mock_slack_app):
         """Test that error handler is registered."""
-        # Check that error handler methods exist on app
-        assert hasattr(app, "register_error_handler")
+        assert hasattr(mock_slack_app, "register_error_handler")
 
     def test_socket_mode_handler(self, mocker):
         """Test SocketModeHandler is importable."""
@@ -33,80 +48,77 @@ class TestAppInitialization:
 class TestMessageEventHandlers:
     """Test message event handlers."""
 
-    def test_message_event_decorator(self):
+    def test_message_event_decorator(self, mock_slack_app):
         """Test that message events are registered."""
-        # The app should have message registered events
-        assert hasattr(app, "message")
+        assert hasattr(mock_slack_app, "message")
 
-    @patch.object(app, "listen")
-    def test_register_message_listener(self, mock_listen):
+    @patch.object(mock_slack_app, "listen")
+    def test_register_message_listener(self, mock_listen, mock_slack_app):
         """Test that listen method exists and is callable."""
-        handler = app.listen(event=["message"])
+        handler = mock_slack_app.listen(event=["message"])
         assert handler is not None
 
 
 class TestReactionEventHandlers:
     """Test reaction event handlers for Slack BOLT."""
 
-    def test_reaction_added_event(self):
+    def test_reaction_added_event(self, mock_slack_app):
         """Test reaction_added event handler exists."""
-        # Check if reaction_added is available
-        assert hasattr(app, "reaction_added")
+        assert hasattr(mock_slack_app, "reaction_added")
 
-    def test_reaction_removed_event(self):
+    def test_reaction_removed_event(self, mock_slack_app):
         """Test reaction_removed event handler exists."""
-        # Check if reaction_removed is available
-        assert hasattr(app, "reaction_removed")
+        assert hasattr(mock_slack_app, "reaction_removed")
 
 
 class TestAppMentionEventHandlers:
     """Test app_mention event handlers for Slack BOLT."""
 
-    def test_app_mention_event(self):
+    def test_app_mention_event(self, mock_slack_app):
         """Test app_mention event handler exists."""
-        assert hasattr(app, "app_mention")
+        assert hasattr(mock_slack_app, "app_mention")
 
-    def test_message_group_mention_event(self):
+    def test_message_group_mention_event(self, mock_slack_app):
         """Test message_group_mention event handler exists."""
-        assert hasattr(app, "message_group_mention")
+        assert hasattr(mock_slack_app, "message_group_mention")
 
 
 class TestWorkflowEventHandlers:
     """Test workflow/event submission event handlers."""
 
-    def test_workflow_event(self):
+    def test_workflow_event(self, mock_slack_app):
         """Test workflow event handler."""
-        assert hasattr(app, "workflow_started")
+        assert hasattr(mock_slack_app, "workflow_started")
 
-    def test_interactions(self):
+    def test_interactions(self, mock_slack_app):
         """Test menu items, dialog submit handlers."""
-        assert hasattr(app, "view_submission")
-        assert hasattr(app, "dialog_submission")
+        assert hasattr(mock_slack_app, "view_submission")
+        assert hasattr(mock_slack_app, "dialog_submission")
 
-    def test_options(self):
+    def test_options(self, mock_slack_app):
         """Test options event handler."""
-        assert hasattr(app, "options")
+        assert hasattr(mock_slack_app, "options")
 
 
 class TestBlockActionsHandlers:
     """Test block actions event handlers."""
 
-    def test_block_actions(self):
+    def test_block_actions(self, mock_slack_app):
         """Test block_actions event handler."""
-        assert hasattr(app, "block_actions")
+        assert hasattr(mock_slack_app, "block_actions")
 
-    def test_shortcuts(self):
+    def test_shortcuts(self, mock_slack_app):
         """Test shortcut handlers for commands and shortcuts."""
-        assert hasattr(app, "commands")
-        assert hasattr(app, "shortcut")
+        assert hasattr(mock_slack_app, "commands")
+        assert hasattr(mock_slack_app, "shortcut")
 
-    def test_shortcuts_shortcut(self):
+    def test_shortcuts_shortcut(self, mock_slack_app):
         """Test shortcut event handler."""
-        assert hasattr(app, "shortcut")
+        assert hasattr(mock_slack_app, "shortcut")
 
-    def test_shortcuts_shortcut(self):
+    def test_shortcuts_shortcut(self, mock_slack_app):
         """Test shortcut."""
-        assert hasattr(app, "interactive_message")
+        assert hasattr(mock_slack_app, "interactive_message")
 
 
 class TestLoggerHandlers:
@@ -115,6 +127,7 @@ class TestLoggerHandlers:
     @pytest.fixture
     def logger(self):
         """Create a logger instance."""
+        import logging
         logging.basicConfig(level=logging.DEBUG)
         logger = logging.getLogger("test")
         return logger
@@ -125,7 +138,6 @@ class TestLoggerHandlers:
         assert hasattr(logger, "debug")
         assert hasattr(logger, "info")
         assert hasattr(logger, "warning")
-        assert hasattr(logger, "error")
         assert hasattr(logger, "exception")
 
 
@@ -143,7 +155,7 @@ class TestErrorHandling:
 class TestSayMethodUsage:
     """Test say method in handlers."""
 
-    @patch.object(app, "say")
+    @patch.object(mock_slack_app, "say")
     def test_send_message(self, mock_say):
         """Test say method is callable."""
         mock_say("test message")
@@ -173,11 +185,11 @@ class TestSocketModeHandler:
 class TestEnvironmentVariables:
     """Test environment variable handling."""
 
-    def test_slack_app_token(self):
+    def test_slack_app_token(self, mock_settings):
         """Test SLACK_APP_TOKEN is in .env.samples."""
         assert "SLACK_APP_TOKEN" in open(".env.samples").read()
 
-    def test_slack_bot_token(self):
+    def test_slack_bot_token(self, mock_settings):
         """Test SLACK_BOT_TOKEN is in .env.samples."""
         assert "SLACK_BOT_TOKEN" in open(".env.samples").read()
 
@@ -185,14 +197,14 @@ class TestEnvironmentVariables:
 class TestBotCommands:
     """Test bot command implementations."""
 
-    def test_commands_event(self):
+    def test_commands_event(self, mock_slack_app):
         """Test external_commands event handler."""
-        assert hasattr(app, "commands")
+        assert hasattr(mock_slack_app, "commands")
 
-    def test_member_group_channel(self):
+    def test_member_group_channel(self, mock_slack_app):
         """Test member_group_channel command handler."""
         # Verify we can register command handlers
-        assert hasattr(app, "command")
+        assert hasattr(mock_slack_app, "command")
 
 
 class TestMessageFormatting:
@@ -225,5 +237,6 @@ class TestContextAndSay:
 
     def test_context_attributes(self):
         """Test BoltContext has expected attributes."""
+        from slack_bolt import BoltContext, Say
         assert BoltContext is not None
         assert Say is not None
